@@ -11,6 +11,8 @@
 
         MoveGenerator moveGenerator;
 
+        MCTSNode rootSearchNode;
+        MCTSNode nodeToExpand;
         Move bestMove;
         int bestEval;
         bool abortSearch;
@@ -31,6 +33,7 @@
             this.settings = settings;
             evaluation = new Evaluation();
             moveGenerator = new MoveGenerator();
+            rootSearchNode = new MCTSNode(board);
             rand = new System.Random();
         }
 
@@ -66,17 +69,14 @@
 
         void SearchMoves()
         {
-            // TODO
-            // Don't forget to end the search once the abortSearch parameter gets set to true.
+            MCTSNode node = rootSearchNode;
 
-            StartSearch();
-            MCTSNode node;// = root node of the search tree;
             while (node.Children.Count > 0)
             {
                 node = node.GetBestChild(1);
                 if (abortSearch) break;
             }
-            EndSearch();
+            nodeToExpand = node;
         }
 
         void LogDebugInfo()
