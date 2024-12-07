@@ -69,7 +69,14 @@
             // TODO
             // Don't forget to end the search once the abortSearch parameter gets set to true.
 
-            throw new NotImplementedException();
+            StartSearch();
+            MCTSNode node;// = root node of the search tree;
+            while (node.Children.Count > 0)
+            {
+                node = node.GetBestChild(1);
+                if (abortSearch) break;
+            }
+            EndSearch();
         }
 
         void LogDebugInfo()
