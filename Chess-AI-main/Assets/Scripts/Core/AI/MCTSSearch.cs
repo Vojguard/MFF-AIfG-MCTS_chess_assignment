@@ -13,6 +13,7 @@
 
         MCTSNode rootSearchNode;
         MCTSNode nodeToExpand;
+        MCTSNode expansionNode;
         Move bestMove;
         int bestEval;
         bool abortSearch;
@@ -77,6 +78,13 @@
                 if (abortSearch) break;
             }
             nodeToExpand = node;
+        }
+
+        void ExpandNode()
+        {
+            MCTSNode expandedNode = new MCTSNode(board, nodeToExpand);
+            nodeToExpand.Children.Add(expandedNode);
+            expansionNode = expandedNode;
         }
 
         void LogDebugInfo()
