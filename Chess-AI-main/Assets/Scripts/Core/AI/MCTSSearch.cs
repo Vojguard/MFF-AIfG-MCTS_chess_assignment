@@ -87,6 +87,21 @@
             expansionNode = expandedNode;
         }
 
+        void Simulate()
+        {
+
+        }
+
+        void Backpropagate(float result)
+        {
+            var thisNode = expansionNode;
+            while (thisNode != null)
+            {
+                thisNode.UpdateStats(result);
+                thisNode = thisNode.Parent;
+            }
+        }
+
         void LogDebugInfo()
         {
             // Optional
