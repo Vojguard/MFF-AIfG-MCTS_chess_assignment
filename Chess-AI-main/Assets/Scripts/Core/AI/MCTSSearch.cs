@@ -89,7 +89,13 @@
 
         void Simulate()
         {
-
+            List<Move> moves = moveGenerator.GenerateMoves(board, false);
+            while (moves.Count > 0)
+            {
+                board.MakeMove(moves[rand.Next(0, moves.Count - 1)]);
+                moves = moveGenerator.GenerateMoves(board, false);
+            }
+            Backpropagate(evaluation.Evaluate(board));
         }
 
         void Backpropagate(float result)
