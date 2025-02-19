@@ -11,9 +11,12 @@
 
         MoveGenerator moveGenerator;
 
+        //Start my shit
         MCTSNode rootSearchNode;
         MCTSNode nodeToExpand;
         MCTSNode expansionNode;
+        //End my shit
+
         Move bestMove;
         int bestEval;
         bool abortSearch;
@@ -34,8 +37,10 @@
             this.settings = settings;
             evaluation = new Evaluation();
             moveGenerator = new MoveGenerator();
-            rootSearchNode = new MCTSNode(board);
             rand = new System.Random();
+
+            //My shit
+            rootSearchNode = new MCTSNode(board);
         }
 
         public void StartSearch()
@@ -68,45 +73,27 @@
             }
         }
 
+        //Start my shit
         void SearchMoves()
         {
-            MCTSNode node = rootSearchNode;
-
-            while (node.Children.Count > 0)
-            {
-                node = node.GetBestChild(1);
-                if (abortSearch) break;
-            }
-            nodeToExpand = node;
+            
         }
 
         void ExpandNode()
         {
-            MCTSNode expandedNode = new MCTSNode(board, nodeToExpand);
-            nodeToExpand.Children.Add(expandedNode);
-            expansionNode = expandedNode;
+            
         }
 
         void Simulate()
         {
-            List<Move> moves = moveGenerator.GenerateMoves(board, false);
-            while (moves.Count > 0)
-            {
-                board.MakeMove(moves[rand.Next(0, moves.Count - 1)]);
-                moves = moveGenerator.GenerateMoves(board, false);
-            }
-            Backpropagate(evaluation.Evaluate(board));
+            
         }
 
         void Backpropagate(float result)
         {
-            var thisNode = expansionNode;
-            while (thisNode != null)
-            {
-                thisNode.UpdateStats(result);
-                thisNode = thisNode.Parent;
-            }
+            
         }
+        //End my shit
 
         void LogDebugInfo()
         {
