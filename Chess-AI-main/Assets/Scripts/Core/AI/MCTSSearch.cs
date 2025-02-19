@@ -40,7 +40,7 @@
             rand = new System.Random();
 
             //My shit
-            rootSearchNode = new MCTSNode(board);
+            rootSearchNode = new(board);
         }
 
         public void StartSearch()
@@ -79,9 +79,20 @@
             
         }
 
+        void SelectBestNode()
+        {
+            var node = rootSearchNode;
+            while (node.Children.Count > 0)
+            {
+                node = node.GetBestChild(1);
+            }
+            nodeToExpand = node;
+        }
+
         void ExpandNode()
         {
-            
+            MCTSNode node = new(nodeToExpand.Board, nodeToExpand);
+            nodeToExpand.AddChild(node);
         }
 
         void Simulate()

@@ -10,14 +10,14 @@ namespace Chess
     {
         public MCTSNode Parent { get; private set; }
         public List<MCTSNode> Children { get; private set; }
-        public object GameState { get; private set; }
+        public Board Board { get; private set; }
         public int Visits { get; private set; }
         public float Score { get; private set; }
         public bool IsFullyExpanded => Children.Count > 0 && Children.TrueForAll(child => child.Visits > 0);
 
-        public MCTSNode(object gameState, MCTSNode parent = null)
+        public MCTSNode(Board board, MCTSNode parent = null)
         {
-            GameState = gameState;
+            Board = board;
             Parent = parent;
             Children = new List<MCTSNode>();
             Visits = 0;
