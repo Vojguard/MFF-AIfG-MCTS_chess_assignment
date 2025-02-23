@@ -14,11 +14,11 @@ namespace Chess
         public Move Move { get; private set; }
         public int Visits { get; private set; }
         public float Score { get; private set; }
-        public bool IsFullyExpanded => Children.Count > 0 && Children.TrueForAll(child => child.Visits > 0);
 
-        public MCTSNode(Board board, MCTSNode parent = null)
+        public MCTSNode(Board board,Move move, MCTSNode parent = null)
         {
             Board = board;
+            Move = move;
             Parent = parent;
             Children = new List<MCTSNode>();
             Visits = 0;
@@ -43,8 +43,11 @@ namespace Chess
 
             foreach (var child in Children)
             {
+                if (child.Visits == 0) {
+                    return child;
+                }
                 float uctValue = (child.Score / child.Visits) +
-                                 explorationParameter * Mathf.Sqrt(Mathf.Log(Visits + 1) / (child.Visits));
+                                 explorationParameter * Mathf.Sqrt(Mathf.Log(Visits) / (child.Visits));
 
                 if (uctValue > bestValue)
                 {

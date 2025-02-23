@@ -8,6 +8,13 @@
     using static System.Math;
     class MCTSSearch : ISearch
     {
+        enum KingDead
+        {
+            None,
+            Black,
+            White,
+        }
+
         public event System.Action<Move> onSearchComplete;
 
         MoveGenerator moveGenerator;
@@ -39,7 +46,7 @@
             rand = new System.Random();
 
             //My shit
-            rootSearchNode = new(board);
+            rootSearchNode = new(board, Move.InvalidMove);
         }
 
         public void StartSearch()
@@ -75,23 +82,30 @@
         //Start my shit
         void SearchMoves()
         {
+            ExpandNode(rootSearchNode);
             searchStopwatch.Start();
-            while(searchStopwatch.ElapsedMilliseconds < settings.searchTimeMillis) 
+            int numOfPlayouts = 0;
+            while(searchStopwatch.ElapsedMilliseconds < settings.searchTimeMillis && numOfPlayouts < settings.maxNumOfPlayouts && !abortSearch) 
             {
                 MCTSNode selectedNode = SelectBestNode();
-                MCTSNode expandedNode = ExpandNode(selectedNode);
-                if (expandedNode == null)
+                if (selectedNode.Visits > 0)
                 {
-                    continue;
+                    selectedNode = ExpandNode(selectedNode);
                 }
-                float simulationResult = Simulate(expandedNode);
-                Backpropagate(expandedNode, simulationResult);
+                float simulationResult = Simulate(selectedNode);
+                Backpropagate(selectedNode, 1 - simulationResult);
+                
+                numOfPlayouts++;
             }
             searchStopwatch.Stop();
 
             bestMove = rootSearchNode.Children
-                .OrderByDescending(child => child.Visits)
+                .OrderByDescending(child => child.Score)
                 .First().Move;
+            foreach (var child in rootSearchNode.Children)
+            {
+                Debug.Log(child.Move.Name + " " + child.Visits + " " + child.Score);
+            }
         }
 
         MCTSNode SelectBestNode()
@@ -107,11 +121,14 @@
         MCTSNode ExpandNode(MCTSNode nodeToExpand)
         {
             var possibleMoves = moveGenerator.GenerateMoves(nodeToExpand.Board, nodeToExpand == rootSearchNode);
-            if (possibleMoves.Count == 0) return null;
-            var boardCopy = board.Clone();
-            boardCopy.MakeMove(possibleMoves[^1]);
-            MCTSNode node = new(boardCopy, nodeToExpand);
-            nodeToExpand.AddChild(node);
+            MCTSNode node = nodeToExpand;
+            foreach (var move in possibleMoves)
+            {
+                var boardCopy = nodeToExpand.Board.Clone();
+                boardCopy.MakeMove(move);
+                node = new(boardCopy, move, nodeToExpand);
+                nodeToExpand.AddChild(node);
+            }
             return node;
         }
 
@@ -121,7 +138,7 @@
             bool whiteTurn = nodeForSim.Board.WhiteToMove;
 
             int playoutDepth = 0;
-            while (playoutDepth < settings.playoutDepthLimit && GetKingCaptured(simBoard) == -1)
+            while (playoutDepth < settings.playoutDepthLimit && GetKingCaptured(simBoard) == KingDead.None)
             {
                 var possibleMoves = moveGenerator.GetSimMoves(simBoard, whiteTurn);
                 SimMove randomMove = possibleMoves[rand.Next(possibleMoves.Count)];
@@ -131,14 +148,14 @@
                 playoutDepth++;
             }
 
-            int res = GetKingCaptured(simBoard);
-            if (res == -1)
+            KingDead res = GetKingCaptured(simBoard);
+            if (res == KingDead.None)
             {
-                return evaluation.EvaluateSimBoard(simBoard, whiteTurn);
+                return evaluation.EvaluateSimBoard(simBoard, nodeForSim.Board.WhiteToMove);
             }
             else
             {
-                return EvalSimEnd(res, whiteTurn);
+                return EvalSimEnd(res, nodeForSim.Board.WhiteToMove);
             }
 
         }
@@ -148,11 +165,12 @@
             while (simNode != null)
             {
                 simNode.UpdateStats(result);
+                result = 1 - result;
                 simNode = simNode.Parent;
             }
         }
 
-        int GetKingCaptured(SimPiece[,] simState)
+        KingDead GetKingCaptured(SimPiece[,] simState)
         {
             bool whiteAlive = false;
             bool blackAlive = false;
@@ -173,26 +191,30 @@
                             blackAlive = true;
                         }
                     }
+                    if (whiteAlive && blackAlive) return KingDead.None;
                 }
             }
 
             if (!blackAlive)
             {
-                return 0;
+                return KingDead.Black;
             }
             else if (!whiteAlive)
             {
-                return 1;
+                return KingDead.White;
             }
             else
             {
-                return -1;
+                return KingDead.None;
             }
         }
 
-        float EvalSimEnd(int deadKing, bool whiteTurn)
+        float EvalSimEnd(KingDead deadKing, bool whiteToMove)
         {
-            if (deadKing == 0 && !whiteTurn || deadKing == 1 && whiteTurn) return 1;
+            if (whiteToMove && deadKing == KingDead.Black) return 1;
+            if (whiteToMove && deadKing == KingDead.White) return 0;
+            if (!whiteToMove && deadKing == KingDead.Black) return 0;
+            if (!whiteToMove && deadKing == KingDead.White) return 1;
             return 0;
         }
 
