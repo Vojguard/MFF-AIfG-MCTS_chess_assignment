@@ -37,7 +37,7 @@ namespace Chess
             new Setting("1q2r3/3kPpp1/1p1P1b1p/3Q1P2/1p6/P6P/1P4P1/1KR2b2 w - - 0 1", 1, 500, 3, true),
 
             // 2 moves
-            /*new Setting("r2qk2r/pb4pp/1n2Pb2/2B2Q2/p1p5/2P5/2B2PPP/1N4K1 w - - 1 0", 2, 7000, 5, true),
+            new Setting("r2qk2r/pb4pp/1n2Pb2/2B2Q2/p1p5/2P5/2B2PPP/1N4K1 w - - 1 0", 2, 7000, 5, true),
             new Setting("6k1/pp4p1/2p5/2bp4/8/P5Pb/1P3rrP/2BRRN1K b - - 0 1", 2, 3000, 5, false),
             new Setting("8/2k2p2/2b3p1/P1p1Np2/1p3b2/1P1K4/5r2/R3R3 b - - 0 1", 2, 5000, 5, false),
             new Setting("6k1/5p2/1p5p/p4Np1/5q2/Q6P/PPr5/3R3K w - - 1 0", 2, 7000, 5, true),

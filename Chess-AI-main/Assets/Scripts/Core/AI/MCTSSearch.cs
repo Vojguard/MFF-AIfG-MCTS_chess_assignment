@@ -60,7 +60,6 @@
             Diagnostics = new SearchDiagnostics();
 
             rootSearchNode = new(board, Move.InvalidMove);
-            Debug.Log(rootSearchNode.Children.Count);
             SearchMoves();
 
             onSearchComplete?.Invoke(bestMove);
@@ -88,24 +87,21 @@
             while (searchStopwatch.ElapsedMilliseconds < settings.searchTimeMillis && numOfPlayouts < settings.maxNumOfPlayouts && !abortSearch)
             {
                 MCTSNode selectedNode = SelectBestNode();
-                //Debug.Log(selectedNode.Board.WhiteToMove);
                 if (selectedNode.Visits > 0)
                 {
-                    //Debug.Log("expanding" + selectedNode.Visits);
                     selectedNode = ExpandNode(selectedNode, false);
                 }
-                //Debug.Log(selectedNode.Visits);
                 float simulationResult = Simulate(selectedNode);
-                //Debug.Log(simulationResult);
-                Backpropagate(selectedNode, simulationResult);
+                Backpropagate(selectedNode,1 - simulationResult);
 
                 numOfPlayouts++;
-            }
-            searchStopwatch.Stop();
 
-            bestMove = rootSearchNode.Children
+                bestMove = rootSearchNode.Children
                 .OrderByDescending(child => child.Score)
                 .First().Move;
+            }
+            searchStopwatch.Stop();
+            
             foreach (var child in rootSearchNode.Children)
             {
                 //Debug.Log(child.Move.Name + " " + child.Visits + " " + child.Score);
@@ -134,7 +130,6 @@
                 node = new(boardCopy, move, nodeToExpand);
                 nodeToExpand.AddChild(node);
             }
-            //Debug.Log("expanded " + node.Move.Name + " from " + nodeToExpand.Board.WhiteToMove);
             return node;
         }
 
@@ -157,11 +152,11 @@
             KingDead res = GetKingCaptured(simBoard);
             if (res == KingDead.None)
             {
-                return evaluation.EvaluateSimBoard(simBoard, rootSearchNode.Board.WhiteToMove);
+                return evaluation.EvaluateSimBoard(simBoard, nodeForSim.Board.WhiteToMove);
             }
             else
             {
-                return EvalSimEnd(res, rootSearchNode.Board.WhiteToMove);
+                return EvalSimEnd(res, nodeForSim.Board.WhiteToMove);
             }
 
         }
@@ -171,6 +166,7 @@
             while (simNode != null)
             {
                 simNode.UpdateStats(result);
+                result = 1 - result;
                 simNode = simNode.Parent;
             }
         }
