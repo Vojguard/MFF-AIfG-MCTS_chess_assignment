@@ -2,4 +2,4 @@
 1 moves test 2: SUCCESS
 1 moves test 3: SUCCESS
 1 moves test 4: SUCCESS
-1 moves test 5: FAILURE
+1 moves test 5: SUCCESS

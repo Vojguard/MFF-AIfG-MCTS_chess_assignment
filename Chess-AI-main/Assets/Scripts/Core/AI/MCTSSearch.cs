@@ -44,9 +44,7 @@
             evaluation = new Evaluation();
             moveGenerator = new MoveGenerator();
             rand = new System.Random();
-
-            //My shit
-            rootSearchNode = new(board, Move.InvalidMove);
+            
         }
 
         public void StartSearch()
@@ -61,6 +59,8 @@
             abortSearch = false;
             Diagnostics = new SearchDiagnostics();
 
+            rootSearchNode = new(board, Move.InvalidMove);
+            Debug.Log(rootSearchNode.Children.Count);
             SearchMoves();
 
             onSearchComplete?.Invoke(bestMove);
@@ -82,19 +82,23 @@
         //Start my shit
         void SearchMoves()
         {
-            ExpandNode(rootSearchNode);
+            ExpandNode(rootSearchNode, true);
             searchStopwatch.Start();
             int numOfPlayouts = 0;
-            while(searchStopwatch.ElapsedMilliseconds < settings.searchTimeMillis && numOfPlayouts < settings.maxNumOfPlayouts && !abortSearch) 
+            while (searchStopwatch.ElapsedMilliseconds < settings.searchTimeMillis && numOfPlayouts < settings.maxNumOfPlayouts && !abortSearch)
             {
                 MCTSNode selectedNode = SelectBestNode();
+                //Debug.Log(selectedNode.Board.WhiteToMove);
                 if (selectedNode.Visits > 0)
                 {
-                    selectedNode = ExpandNode(selectedNode);
+                    //Debug.Log("expanding" + selectedNode.Visits);
+                    selectedNode = ExpandNode(selectedNode, false);
                 }
+                //Debug.Log(selectedNode.Visits);
                 float simulationResult = Simulate(selectedNode);
-                Backpropagate(selectedNode, 1 - simulationResult);
-                
+                //Debug.Log(simulationResult);
+                Backpropagate(selectedNode, simulationResult);
+
                 numOfPlayouts++;
             }
             searchStopwatch.Stop();
@@ -104,7 +108,7 @@
                 .First().Move;
             foreach (var child in rootSearchNode.Children)
             {
-                Debug.Log(child.Move.Name + " " + child.Visits + " " + child.Score);
+                //Debug.Log(child.Move.Name + " " + child.Visits + " " + child.Score);
             }
         }
 
@@ -118,9 +122,10 @@
             return node;
         }
 
-        MCTSNode ExpandNode(MCTSNode nodeToExpand)
+        MCTSNode ExpandNode(MCTSNode nodeToExpand, bool isRoot)
         {
-            var possibleMoves = moveGenerator.GenerateMoves(nodeToExpand.Board, nodeToExpand == rootSearchNode);
+            var possibleMoves = moveGenerator.GenerateMoves(nodeToExpand.Board, isRoot);
+            possibleMoves.Reverse();
             MCTSNode node = nodeToExpand;
             foreach (var move in possibleMoves)
             {
@@ -129,6 +134,7 @@
                 node = new(boardCopy, move, nodeToExpand);
                 nodeToExpand.AddChild(node);
             }
+            //Debug.Log("expanded " + node.Move.Name + " from " + nodeToExpand.Board.WhiteToMove);
             return node;
         }
 
@@ -151,11 +157,11 @@
             KingDead res = GetKingCaptured(simBoard);
             if (res == KingDead.None)
             {
-                return evaluation.EvaluateSimBoard(simBoard, nodeForSim.Board.WhiteToMove);
+                return evaluation.EvaluateSimBoard(simBoard, rootSearchNode.Board.WhiteToMove);
             }
             else
             {
-                return EvalSimEnd(res, nodeForSim.Board.WhiteToMove);
+                return EvalSimEnd(res, rootSearchNode.Board.WhiteToMove);
             }
 
         }
@@ -165,7 +171,6 @@
             while (simNode != null)
             {
                 simNode.UpdateStats(result);
-                result = 1 - result;
                 simNode = simNode.Parent;
             }
         }
@@ -211,11 +216,30 @@
 
         float EvalSimEnd(KingDead deadKing, bool whiteToMove)
         {
-            if (whiteToMove && deadKing == KingDead.Black) return 1;
-            if (whiteToMove && deadKing == KingDead.White) return 0;
-            if (!whiteToMove && deadKing == KingDead.Black) return 0;
-            if (!whiteToMove && deadKing == KingDead.White) return 1;
-            return 0;
+            int res = -1;
+            if (whiteToMove)
+            {
+                if (deadKing == KingDead.Black)
+                {
+                    res = 1;
+                } else
+                {
+                    res = 0;
+                }
+            }
+            else
+            {
+                if (deadKing == KingDead.White)
+                {
+                    res = 1;
+                }
+                else
+                {
+                    res = 0;
+                }
+            }
+            //Debug.Log(deadKing.ToString() + " & " + whiteToMove + " = " + res);
+            return res;
         }
 
         void MoveSimPiece(SimPiece[,] simState, SimMove simMove)
